@@ -12,6 +12,13 @@ namespace Authentication.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly IAuthorizationService _authorizationService;
+
+        public HomeController(IAuthorizationService authorizationService)
+        {
+            _authorizationService = authorizationService;
+        }
+
         public IActionResult Index()
         {
             return View();
@@ -51,7 +58,7 @@ namespace Authentication.Controllers
                 // один из параметров, обязательных
                 new Claim(ClaimTypes.DateOfBirth, "11/11/2020"),
                 // ещё один
-                new Claim(ClaimTypes.Role, "Admin"),
+                new Claim(ClaimTypes.Role, "AdminTwo"),
                 new Claim("DrivingLicense", "A+")
             };
 
@@ -63,6 +70,25 @@ namespace Authentication.Controllers
             HttpContext.SignInAsync(userPrincipal);
 
             return RedirectToAction("Index");
+        }
+
+        public async Task<IActionResult> DoStuff(
+            [FromServices] IAuthorizationService authorizationService)
+        {
+            // we are doing stuff here
+            var builder = new AuthorizationPolicyBuilder("Schema");
+            var customPolicy = builder
+                .RequireClaim("Hello")
+                .Build();
+
+            var authResult = await authorizationService.AuthorizeAsync(User, customPolicy);
+
+            if (authResult.Succeeded)
+            {
+                return View("Index");
+            }
+
+            return View("Index");
         }
     }
 }
